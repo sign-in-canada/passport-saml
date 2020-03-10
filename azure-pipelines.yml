@@ -6,22 +6,8 @@
 trigger:
 - master
 
-pool:
-  vmImage: 'ubuntu-latest'
-
-steps:
-- task: NodeTool@0
+- task: Npm@1
   inputs:
-    versionSpec: '10.x'
-  displayName: 'Install Node.js'
-
-- script: |
-    npm install
-    npm pack
-  displayName: 'npm install and build'
-
-- task: PublishPipelineArtifact@1
-  inputs:
-    targetPath: '$(Pipeline.Workspace)'
-    artifact: 'passport-saml'
-    publishLocation: 'pipeline'
+    command: publish
+    publishRegistry: useFeed
+    publishFeed: Sign_in_Canada
