@@ -20,15 +20,6 @@ steps:
     npm pack
   displayName: 'npm install and build'
 
-- task: PublishPipelineArtifact@1
-  inputs:
-    targetPath: '$(Pipeline.Workspace)'
-    artifact: 'passport-saml'
-    publishLocation: 'pipeline'
-
-- task: npmAuthenticate@0
-  inputs:
-    workingFile: .npmrc
 - task: Npm@1
   inputs:
     command: publish
