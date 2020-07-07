@@ -1,6 +1,6 @@
 {
   "name": "sic-passport-saml",
-  "version": "1.4.0",
+  "version": "1.4.1",
   "license": "MIT",
   "keywords": [
     "saml",
@@ -34,6 +34,7 @@
     "xml-encryption": "^1.0.0",
     "xml2js": "0.4.x",
     "xmlbuilder": "^11.0.0",
+    "xmlbuilder2": "^2.1.6",
     "xmldom": "0.1.x"
   },
   "devDependencies": {
