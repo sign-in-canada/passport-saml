@@ -1,5 +1,5 @@
 {
-  "name": "sic-passport-saml",
+  "name": "@sic/passport-saml",
   "version": "1.4.2",
   "license": "MIT",
   "keywords": [
