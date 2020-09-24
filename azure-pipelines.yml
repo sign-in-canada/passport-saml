@@ -18,4 +18,4 @@ steps:
   inputs:
     command: publish
     publishRegistry: useFeed
-    publishFeed: 'Sign in Canada/Packages'
+    publishFeed: 'Sign in Canada/SignInCanada'
