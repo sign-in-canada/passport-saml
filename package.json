@@ -50,7 +50,7 @@
     "watch": "concurrently --kill-others \"npm:*-watch\""
   },
   "dependencies": {
-    "debug": "^4.3.1",
+    "debug": "^4.3.2",
     "passport-strategy": "*",
     "xml-crypto": "^2.0.0",
     "xml-encryption": "1.2.1",
