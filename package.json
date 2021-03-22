@@ -1,5 +1,5 @@
 {
-  "name": "passport-saml",
+  "name": "@sic/passport-saml",
   "version": "2.0.6",
   "description": "SAML 2.0 authentication strategy for Passport",
   "keywords": [
@@ -56,6 +56,7 @@
     "xml-encryption": "1.2.1",
     "xml2js": "^0.4.23",
     "xmlbuilder": "^15.1.1",
+    "xmlbuilder2": "^2.4.0",
     "xmldom": "0.5.x"
   },
   "devDependencies": {

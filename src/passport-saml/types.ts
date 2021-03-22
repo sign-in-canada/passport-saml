@@ -36,6 +36,7 @@ export interface SamlOptions extends SamlSigningOptions {
   issuer: string;
   cert: string | string[] | CertCallback;
   decryptionPvk: string | Buffer;
+  encryptionCert: string;
 
   // Additional SAML behaviors
   additionalParams: Record<string, string>;
@@ -46,6 +47,7 @@ export interface SamlOptions extends SamlSigningOptions {
   disableRequestedAuthnContext: boolean;
   authnContext: string | string[];
   forceAuthn: boolean;
+  allowCreate: boolean;
   skipRequestCompression: boolean;
   authnRequestBinding?: string;
   RACComparison: RACComparision;
@@ -96,7 +98,6 @@ export interface AuthorizeRequestXML {
 
 export interface LogoutRequestXML {
   "samlp:LogoutRequest": {
-    "saml:NameID": XMLInput;
     [key: string]: XMLValue;
   };
 }
