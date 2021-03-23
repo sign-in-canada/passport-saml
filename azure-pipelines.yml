@@ -11,11 +11,14 @@ pool:
 steps:
 - task: NodeTool@0
   inputs:
-    versionSpec: '10.x'
+    versionSpec: '12.x'
   displayName: 'Install Node.js'
 
 - task: Npm@1
   inputs:
-    command: publish
-    publishRegistry: useFeed
-    publishFeed: 'Sign in Canada/SignInCanada'
+    command: install
+
+- task: Npm@1
+  inputs:
+    command: custom
+    customCommand: run-script build
