@@ -1,6 +1,6 @@
 {
   "name": "@sic/passport-saml",
-  "version": "1.4.3",
+  "version": "1.4.4",
   "license": "MIT",
   "keywords": [
     "saml",
@@ -30,12 +30,12 @@
     "debug": "^3.1.0",
     "passport-strategy": "*",
     "q": "^1.5.0",
-    "xml-crypto": "^1.4.0",
+    "xml-crypto": "^2.1.1",
     "xml-encryption": "^1.0.0",
     "xml2js": "0.4.x",
     "xmlbuilder": "^11.0.0",
     "xmlbuilder2": "^2.1.6",
-    "xmldom": "0.1.x"
+    "xmldom": "^0.5.0"
   },
   "devDependencies": {
     "body-parser": "^1.17.1",
