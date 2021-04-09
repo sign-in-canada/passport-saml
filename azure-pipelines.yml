@@ -22,3 +22,9 @@ steps:
   inputs:
     command: custom
     customCommand: run-script build
+
+- task: Npm@1
+  inputs:
+    command: publish
+    publishRegistry: useFeed
+    publishFeed: 'Sign in Canada/SignInCanada'
