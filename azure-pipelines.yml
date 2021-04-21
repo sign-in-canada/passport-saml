@@ -23,10 +23,6 @@ steps:
     command: custom
     customCommand: run-script build
 
-- script: |
-    npm run test
-  displayName: 'Run tests'
-
 - task: Npm@1
   inputs:
     command: publish
