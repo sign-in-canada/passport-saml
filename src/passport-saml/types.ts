@@ -5,8 +5,6 @@ import type { CacheProvider } from "./inmemory-cache-provider";
 export type CertCallback = (
   callback: (err: Error | null, cert?: string | string[]) => void
 ) => void;
-export type RACComparision = "exact" | "minimum" | "maximum" | "better";
-export type SignatureAlgorithm = "sha1" | "sha256" | "sha512";
 
 export interface AuthenticateOptions extends passport.AuthenticateOptions {
   samlFallback?: "login-request" | "logout-request";
@@ -16,62 +14,62 @@ export interface AuthenticateOptions extends passport.AuthenticateOptions {
 export interface AuthorizeOptions extends AuthenticateOptions {
   samlFallback?: "login-request" | "logout-request";
 }
+export interface SAMLOptions {
+    // Core
+    callbackUrl: string;
+    path: string;
+    protocol: string;
+    host: string;
+    entryPoint: string;
+    issuer: string;
+    /** @deprecated use privateKey field instead */
+    privateCert?: string;
+    privateKey: string;
+    cert: string | string[] | CertCallback;
+    decryptionPvk: string;
+    encryptionCert: string;
+    signatureAlgorithm: 'sha1' | 'sha256' | 'sha512';
 
-export interface SamlSigningOptions {
-  /** @deprecated use privateKey field instead */
-  privateCert?: string | Buffer;
-  privateKey: string | Buffer;
-  signatureAlgorithm?: SignatureAlgorithm;
-  xmlSignatureTransforms?: string[];
-  digestAlgorithm?: string;
+    // Additional SAML behaviors
+    additionalParams: Record<string, string>;
+    additionalAuthorizeParams: Record<string, string>;
+    identifierFormat: string;
+    acceptedClockSkewMs: number;
+    attributeConsumingServiceIndex: string | null;
+    disableRequestedAuthnContext: boolean;
+    authnContext: string | string[];
+    forceAuthn: boolean;
+    allowCreate: boolean;
+    skipRequestCompression: boolean;
+    authnRequestBinding?: string;
+    /** @deprecated use racComparison field instead */
+    RACComparison?: 'exact' | 'minimum' | 'maximum' | 'better';
+    racComparison: 'exact' | 'minimum' | 'maximum' | 'better';
+    providerName: string;
+    passive: boolean;
+    idpIssuer: string;
+    audience: string;
+    scoping : SamlScopingConfig;
+
+    // InResponseTo Validation
+    validateInResponseTo: boolean;
+    requestIdExpirationPeriodMs: number;
+    cacheProvider: CacheProvider;
+
+    // Logout
+    logoutUrl: string;
+    additionalLogoutParams: Record<string, string>;
+    logoutCallbackUrl: string;
+
+    // extras
+    xmlSignatureTransforms: string[];
+    digestAlgorithm: string;
+    /** @deprecated use disableRequestAcsUrl field instead */
+    disableRequestACSUrl?: boolean;
+    disableRequestAcsUrl: boolean;
 }
 
-export interface SamlOptions extends SamlSigningOptions {
-  // Core
-  callbackUrl: string;
-  path: string;
-  protocol: string;
-  host: string;
-  entryPoint: string;
-  issuer: string;
-  cert: string | string[] | CertCallback;
-  decryptionPvk: string | Buffer;
-  encryptionCert: string;
-
-  // Additional SAML behaviors
-  additionalParams: Record<string, string>;
-  additionalAuthorizeParams: Record<string, string>;
-  identifierFormat: string | null;
-  acceptedClockSkewMs: number;
-  attributeConsumingServiceIndex: string | null;
-  disableRequestedAuthnContext: boolean;
-  authnContext: string | string[];
-  forceAuthn: boolean;
-  allowCreate: boolean;
-  skipRequestCompression: boolean;
-  authnRequestBinding?: string;
-  RACComparison: RACComparision;
-  providerName: string;
-  passive: boolean;
-  idpIssuer: string;
-  audience: string;
-  scoping: SamlScopingConfig;
-
-  // InResponseTo Validation
-  validateInResponseTo: boolean;
-  requestIdExpirationPeriodMs: number;
-  cacheProvider: CacheProvider;
-
-  // Logout
-  logoutUrl: string;
-  additionalLogoutParams: Record<string, string>;
-  logoutCallbackUrl: string;
-
-  // extras
-  disableRequestACSUrl: boolean;
-}
-
-export type SamlConfig = Partial<SamlOptions> & StrategyOptions;
+export type SamlConfig = Partial<SAMLOptions> & StrategyOptions
 
 interface StrategyOptions {
   name?: string;
