@@ -25,7 +25,7 @@ import {
   LogoutRequestXML,
   Profile,
   RequestWithUser,
-  SAMLOptions,
+  SamlOptions,
   SamlIDPListConfig,
   SamlIDPEntryConfig,
   SamlScopingConfig,
@@ -108,14 +108,14 @@ async function promiseWithNameID(nameid: Node): Promise<NameID> {
 }
 
 class SAML {
-  options: SAMLOptions;
+  options: SamlOptions;
   cacheProvider: InMemoryCacheProvider;
 
-  constructor(options: Partial<SAMLOptions>) {
+  constructor(options: Partial<SamlOptions>) {
     this.options = this.initialize(options);
     this.cacheProvider = this.options.cacheProvider;
   }
-  initialize(options: Partial<SAMLOptions>): SAMLOptions {
+  initialize(options: Partial<SamlOptions>): SamlOptions {
     if (!options) {
       options = {};
     }
@@ -123,29 +123,13 @@ class SAML {
     if (options.privateCert) {
       console.warn("options.privateCert has been deprecated; use options.privateKey instead.");
 
-      if (options.privateKey == null) {
+      if (!options.privateKey) {
         options.privateKey = options.privateCert;
       }
     }
 
-    if (options.RACComparison) {
-      console.warn("options.RACComparison has been deprecated; use options.racComparison instead.")
-
-      if (options.racComparison == null) {
-        options.racComparison = options.RACComparison;
-      }
-    }
-
-    if (options.disableRequestACSUrl) {
-      console.warn("options.disableRequestACSUrl has been deprecated; use options.disableRequestAcsUrl instead.")
-
-      if (options.disableRequestAcsUrl == null) {
-        options.disableRequestAcsUrl = options.disableRequestACSUrl;
-      }
-    }
-
-    if (Object.prototype.hasOwnProperty.call(options, 'cert') && !options.cert) {
-      throw new Error('Invalid property: cert must not be empty');
+    if (Object.prototype.hasOwnProperty.call(options, "cert") && !options.cert) {
+      throw new Error("Invalid property: cert must not be empty");
     }
 
     if (!options.path) {
@@ -208,13 +192,16 @@ class SAML {
      * - maximum:  Assertion context must be no stronger than a context in the list
      * - better:  Assertion context must be stronger than all contexts in the list
      */
-    if (!options.racComparison || ['exact','minimum','maximum','better'].indexOf(options.racComparison) === -1){
-      options.racComparison = 'exact';
+    if (
+      !options.RACComparison ||
+      ["exact", "minimum", "maximum", "better"].indexOf(options.RACComparison) === -1
+    ) {
+      options.RACComparison = "exact";
     }
-    
+
     options.authnRequestBinding = options.authnRequestBinding || "HTTP-Redirect";
 
-    return options as SAMLOptions;
+    return options as SamlOptions;
   }
 
   getProtocol(req: Request | { headers?: undefined; protocol?: undefined }) {
@@ -313,7 +300,7 @@ class SAML {
       request["samlp:AuthnRequest"]["@ForceAuthn"] = true;
     }
 
-    if (!this.options.disableRequestAcsUrl) {
+    if (!this.options.disableRequestACSUrl) {
       request["samlp:AuthnRequest"]["@AssertionConsumerServiceURL"] = this.getCallbackUrl(req);
     }
 
@@ -334,12 +321,12 @@ class SAML {
         });
       });
 
-        request['samlp:AuthnRequest']['samlp:RequestedAuthnContext'] = {
-          '@xmlns:samlp': 'urn:oasis:names:tc:SAML:2.0:protocol',
-          '@Comparison': this.options.racComparison,
-          'saml:AuthnContextClassRef': authnContextClassRefs
-        };
-      }
+      request["samlp:AuthnRequest"]["samlp:RequestedAuthnContext"] = {
+        "@xmlns:samlp": "urn:oasis:names:tc:SAML:2.0:protocol",
+        "@Comparison": this.options.RACComparison,
+        "saml:AuthnContextClassRef": authnContextClassRefs,
+      };
+    }
 
     if (this.options.attributeConsumingServiceIndex != null) {
       request["samlp:AuthnRequest"][
@@ -821,8 +808,6 @@ class SAML {
     if (totalReferencedNodes.length > 1) {
       return false;
     }
-    // normalize XML to replace XML-encoded carriage returns with actual carriage returns
-    fullXml = this.normalizeXml(fullXml);
     fullXml = this.normalizeNewlines(fullXml);
     return sig.checkSignature(fullXml);
   }
@@ -1542,12 +1527,6 @@ class SAML {
     // we are considered the XML processor and are responsible for newline normalization
     // https://github.com/node-saml/passport-saml/issues/431#issuecomment-718132752
     return xml.replace(/\r\n?/g, "\n");
-  }
-
-  normalizeXml(xml: string): string {
-    // we can use this utility to parse and re-stringify XML
-    // `DOMParser` will take care of normalization tasks, like replacing XML-encoded carriage returns with actual carriage returns
-    return new xmldom.DOMParser({}).parseFromString(xml).toString();
   }
 }
 
