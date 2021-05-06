@@ -25,6 +25,7 @@ export interface SAMLOptions {
     privateKey: string;
     cert: string | string[] | CertCallback;
     decryptionPvk: string;
+    encryptionCert: string;
     signatureAlgorithm: 'sha1' | 'sha256' | 'sha512';
 
     // Additional SAML behaviors
@@ -36,6 +37,7 @@ export interface SAMLOptions {
     disableRequestedAuthnContext: boolean;
     authnContext: string | string[];
     forceAuthn: boolean;
+    allowCreate: boolean;
     skipRequestCompression: boolean;
     /** @deprecated use racComparison field instead */
     RACComparison?: 'exact' | 'minimum' | 'maximum' | 'better';
@@ -92,7 +94,6 @@ export interface AuthorizeRequestXML {
 
 export interface LogoutRequestXML {
   'samlp:LogoutRequest': {
-    'saml:NameID': XMLInput;
     [key: string]: XMLValue;
   };
 }
