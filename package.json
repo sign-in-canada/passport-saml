@@ -53,21 +53,13 @@
   "dependencies": {
     "debug": "^4.3.1",
     "passport-strategy": "*",
-<<<<<<< HEAD
-    "xml-crypto": "^2.0.0",
-    "xml-encryption": "1.2.1",
-    "xml2js": "^0.4.23",
-    "xmlbuilder": "^15.1.1",
-    "xmldom": "0.4.x"
-=======
     "q": "^1.5.0",
     "xml-crypto": "^2.1.1",
-    "xml-encryption": "^1.0.0",
+    "xml-encryption": "^1.2.1",
     "xml2js": "0.4.x",
-    "xmlbuilder": "^11.0.0",
+    "xmlbuilder": "^15.1.1",
     "xmlbuilder2": "^2.1.6",
     "xmldom": "^0.5.0"
->>>>>>> 8b12cc793e14c61374c34e45fc1e3b9f7681ebb8
   },
   "devDependencies": {
     "@types/debug": "^4.1.5",
