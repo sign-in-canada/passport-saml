@@ -1,13 +1,8 @@
 {
-<<<<<<< HEAD
-  "name": "passport-saml",
+  "name": "@sic/passport-saml",
   "version": "2.0.5",
   "description": "SAML 2.0 authentication strategy for Passport",
-=======
-  "name": "@sic/passport-saml",
-  "version": "1.4.4",
   "license": "MIT",
->>>>>>> 8b12cc793e14c61374c34e45fc1e3b9f7681ebb8
   "keywords": [
     "saml",
     "adfs",
