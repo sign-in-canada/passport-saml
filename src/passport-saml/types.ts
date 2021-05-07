@@ -38,6 +38,7 @@ export interface SAMLOptions {
     authnContext: string | string[];
     forceAuthn: boolean;
     allowCreate: boolean;
+    spNameQualifier: string;
     skipRequestCompression: boolean;
     /** @deprecated use racComparison field instead */
     RACComparison?: 'exact' | 'minimum' | 'maximum' | 'better';

@@ -259,8 +259,9 @@ class SAML {
   generateAuthorizeRequest(req: Request, isPassive: boolean, isHttpPostBinding: boolean, callback: (err: Error | null, request?: string) => void) {
     const id = "_" + this.generateUniqueID();
     const instant = this.generateInstant();
-    const forceAuthn = this.options.forceAuthn || true;
+    const forceAuthn = this.options.forceAuthn || false;
     const allowCreate = this.options.allowCreate || true;
+    const spNameQualifier = this.options.spNameQualifier || this.options.issuer;
 
     (async () => {
       if(this.options.validateInResponseTo) {
@@ -300,6 +301,7 @@ class SAML {
         request['samlp:AuthnRequest']['samlp:NameIDPolicy'] = {
           '@xmlns:samlp': 'urn:oasis:names:tc:SAML:2.0:protocol',
           '@Format': this.options.identifierFormat,
+          "@SPNameQualifier": spNameQualifier,
           '@AllowCreate': allowCreate
         };
       }
