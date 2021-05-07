@@ -301,7 +301,7 @@ class SAML {
         request['samlp:AuthnRequest']['samlp:NameIDPolicy'] = {
           '@xmlns:samlp': 'urn:oasis:names:tc:SAML:2.0:protocol',
           '@Format': this.options.identifierFormat,
-          "@SPNameQualifier": spNameQualifier,
+          '@SPNameQualifier': spNameQualifier,
           '@AllowCreate': allowCreate
         };
       }
