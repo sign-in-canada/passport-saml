@@ -881,18 +881,22 @@ class SAML {
                 const msgType = statusCode[0].$.Value.match(/[^:]*$/)[0];
                 if (msgType != 'Success') {
                     let msg = 'unspecified';
+                    let failure = 'unspecified';
                     if (status[0].StatusMessage) {
                       msg = status[0].StatusMessage[0]._;
-                    } else if (statusCode[0].StatusCode) {
-                      msg = statusCode[0].StatusCode[0].$.Value.match(/[^:]*$/)[0];
+                    } 
+                    if (statusCode[0].StatusCode) {
+                      failure = statusCode[0].StatusCode[0].$.Value.match(/[^:]*$/)[0];
                     }
-                    const error = new Error('SAML provider returned ' + msgType + ' error: ' + msg);
+                    const error = new Error('SAML provider returned ' + msgType + ' error: ' + msg || failure);
                     const builderOpts = {
                       rootName: 'Status',
                       headless: true
                     };
                     // @ts-expect-error adding extra attr to default Error object
                     error.statusXml = new xml2js.Builder(builderOpts).buildObject(status[0]);
+                    // @ts-expect-error: SIC custom error management
+                    error.sicErrURL = failure + "&message=" + msg.replace(/\n|\r/g, "").replace(/\.+$/, "") + "&status=" + msgType;                    
                     return Promise.reject(error);
                   }
                 }
