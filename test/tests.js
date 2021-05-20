@@ -274,6 +274,7 @@ describe( 'passport-saml /', function() {
               [ { '$':
                    { 'xmlns:samlp': 'urn:oasis:names:tc:SAML:2.0:protocol',
                      Format: 'urn:oasis:names:tc:SAML:1.1:nameid-format:emailAddress',
+                     SPNameQualifier: 'onelogin_saml',
                      AllowCreate: 'true' } } ],
              'samlp:RequestedAuthnContext':
               [ { '$':
@@ -300,6 +301,7 @@ describe( 'passport-saml /', function() {
               [ { '$':
                    { 'xmlns:samlp': 'urn:oasis:names:tc:SAML:2.0:protocol',
                      Format: 'urn:oasis:names:tc:SAML:1.1:nameid-format:emailAddress',
+                     SPNameQualifier: 'onelogin_saml',
                      AllowCreate: 'true' } } ],
              'samlp:RequestedAuthnContext':
               [ { '$':
@@ -334,6 +336,7 @@ describe( 'passport-saml /', function() {
               [ { '$':
                    { 'xmlns:samlp': 'urn:oasis:names:tc:SAML:2.0:protocol',
                      Format: 'alternateIdentifier',
+                     SPNameQualifier: 'http://exampleSp.com/saml',
                      AllowCreate: 'true' } } ],
              'samlp:RequestedAuthnContext':
               [ { '$':
@@ -368,6 +371,7 @@ describe( 'passport-saml /', function() {
               [ { '$':
                    { 'xmlns:samlp': 'urn:oasis:names:tc:SAML:2.0:protocol',
                      Format: 'alternateIdentifier',
+                     SPNameQualifier: 'http://exampleSp.com/saml',
                      AllowCreate: 'true' } } ],
              'samlp:RequestedAuthnContext':
               [ { '$':
@@ -405,6 +409,7 @@ describe( 'passport-saml /', function() {
               [ { '$':
                    { 'xmlns:samlp': 'urn:oasis:names:tc:SAML:2.0:protocol',
                      Format: 'alternateIdentifier',
+                     SPNameQualifier: 'http://exampleSp.com/saml',
                      AllowCreate: 'true' } } ] } }
       },
       { name: "Config with AuthnContext",
@@ -432,6 +437,7 @@ describe( 'passport-saml /', function() {
               [ { '$':
                    { 'xmlns:samlp': 'urn:oasis:names:tc:SAML:2.0:protocol',
                      Format: 'alternateIdentifier',
+                     SPNameQualifier: 'http://exampleSp.com/saml',
                      AllowCreate: 'true' } } ],
              'samlp:RequestedAuthnContext':
               [ { '$':
@@ -466,6 +472,7 @@ describe( 'passport-saml /', function() {
               [ { '$':
                    { 'xmlns:samlp': 'urn:oasis:names:tc:SAML:2.0:protocol',
                      Format: 'alternateIdentifier',
+                     SPNameQualifier: 'http://exampleSp.com/saml',
                      AllowCreate: 'true' } } ],
              'samlp:RequestedAuthnContext':
               [ { '$':
@@ -499,6 +506,7 @@ describe( 'passport-saml /', function() {
               [ { '$':
                    { 'xmlns:samlp': 'urn:oasis:names:tc:SAML:2.0:protocol',
                      Format: 'alternateIdentifier',
+                     SPNameQualifier: 'http://exampleSp.com/saml',
                      AllowCreate: 'true' } } ],
              'samlp:RequestedAuthnContext':
               [ { '$':
@@ -568,6 +576,7 @@ describe( 'passport-saml /', function() {
                 '$': {
                   AllowCreate: 'true',
                   Format: 'alternateIdentifier',
+                  SPNameQualifier: 'http://exampleSp.com/saml',
                   'xmlns:samlp': 'urn:oasis:names:tc:SAML:2.0:protocol',
                 }
               }
@@ -662,6 +671,7 @@ describe( 'passport-saml /', function() {
                 '$': {
                   AllowCreate: 'true',
                   Format: 'alternateIdentifier',
+                  SPNameQualifier: 'http://exampleSp.com/saml',
                   'xmlns:samlp': 'urn:oasis:names:tc:SAML:2.0:protocol',
                 }
               }
@@ -751,6 +761,7 @@ describe( 'passport-saml /', function() {
                 '$': {
                   AllowCreate: 'true',
                   Format: 'alternateIdentifier',
+                  SPNameQualifier: 'http://exampleSp.com/saml',
                   'xmlns:samlp': 'urn:oasis:names:tc:SAML:2.0:protocol',
                 }
               }
@@ -835,6 +846,7 @@ describe( 'passport-saml /', function() {
                 '$': {
                   AllowCreate: 'true',
                   Format: 'alternateIdentifier',
+                  SPNameQualifier: 'http://exampleSp.com/saml',
                   'xmlns:samlp': 'urn:oasis:names:tc:SAML:2.0:protocol',
                 }
               }
@@ -920,6 +932,7 @@ describe( 'passport-saml /', function() {
                 '$': {
                   AllowCreate: 'true',
                   Format: 'alternateIdentifier',
+                  SPNameQualifier: 'http://exampleSp.com/saml',
                   'xmlns:samlp': 'urn:oasis:names:tc:SAML:2.0:protocol',
                 }
               }
@@ -1185,7 +1198,7 @@ describe( 'passport-saml /', function() {
            'saml:Issuer':
             [ { _: 'onelogin_saml',
                 '$': { 'xmlns:saml': 'urn:oasis:names:tc:SAML:2.0:assertion' } } ],
-           'saml:NameID': [ { _: 'bar', '$': { Format: 'foo' } } ] } };
+           'NameID': [ { _: 'bar', '$': { Format: 'foo', xmlns: 'urn:oasis:names:tc:SAML:2.0:assertion' } } ] } };
 
       var samlObj = new SAML( { entryPoint: "foo" } );
       var logoutRequestPromise = samlObj.generateLogoutRequest({
@@ -1222,7 +1235,7 @@ describe( 'passport-saml /', function() {
            'saml:Issuer':
             [ { _: 'onelogin_saml',
                 '$': { 'xmlns:saml': 'urn:oasis:names:tc:SAML:2.0:assertion' } } ],
-           'saml:NameID': [ { _: 'bar', '$': { Format: 'foo',
+           'NameID': [ { _: 'bar', '$': { Format: 'foo', xmlns: 'urn:oasis:names:tc:SAML:2.0:assertion',
                                                SPNameQualifier: 'Service Provider',
                                                NameQualifier: 'Identity Provider' } } ] } };
 
@@ -1291,7 +1304,7 @@ describe( 'passport-saml /', function() {
            'saml:Issuer':
             [ { _: 'onelogin_saml',
                 '$': { 'xmlns:saml': 'urn:oasis:names:tc:SAML:2.0:assertion' } } ],
-           'saml:NameID': [ { _: 'bar', '$': { Format: 'foo' } } ],
+           'NameID': [ { _: 'bar', '$': { Format: 'foo', xmlns: 'urn:oasis:names:tc:SAML:2.0:assertion' } } ],
            'saml2p:SessionIndex':
            [ { _: 'session-id',
                '$': { 'xmlns:saml2p': 'urn:oasis:names:tc:SAML:2.0:protocol' } } ] } };

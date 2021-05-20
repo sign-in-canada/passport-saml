@@ -888,7 +888,7 @@ class SAML {
                     if (statusCode[0].StatusCode) {
                       failure = statusCode[0].StatusCode[0].$.Value.match(/[^:]*$/)[0];
                     }
-                    const error = new Error('SAML provider returned ' + msgType + ' error: ' + msg || failure);
+                    const error = new Error('SAML provider returned ' + msgType + ' error: ' + (msg != 'unspecified' ? msg : failure));
                     const builderOpts = {
                       rootName: 'Status',
                       headless: true
