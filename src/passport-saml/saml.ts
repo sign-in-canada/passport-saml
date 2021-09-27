@@ -4,7 +4,7 @@ import * as zlib from 'zlib';
 import * as xml2js from 'xml2js';
 import * as xmlCrypto from 'xml-crypto';
 import * as crypto from 'crypto';
-import * as xmldom from 'xmldom';
+import * as xmldom from '@xmldom/xmldom';
 import * as url from 'url';
 import * as querystring from 'querystring';
 import * as xmlbuilder from 'xmlbuilder';
