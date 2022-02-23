@@ -1,5 +1,5 @@
-Passport-SAML
-=============
+# Passport-SAML
+
 [![Build Status](https://github.com/node-saml/passport-saml/workflows/Build%20Status/badge.svg)](https://github.com/node-saml/passport-saml/actions?query=workflow%3ABuild%Status) [![GitHub version](https://badge.fury.io/gh/node-saml%2Fpassport-saml.svg)](https://badge.fury.io/gh/node-saml%2Fpassport-saml) [![npm version](https://badge.fury.io/js/passport-saml.svg)](http://badge.fury.io/js/passport-saml) [![NPM](https://nodei.co/npm/passport-saml.png?downloads=true&downloadRank=true&stars=true)](https://nodei.co/npm/passport-saml/) [![code style: prettier](https://img.shields.io/badge/code_style-prettier-ff69b4.svg?style=flat-square)](https://github.com/prettier/prettier)
 
 This is a [SAML 2.0](http://en.wikipedia.org/wiki/SAML_2.0) authentication provider for [Passport](http://passportjs.org/), the Node.js authentication library.
@@ -11,7 +11,9 @@ Passport-SAML has been tested to work with Onelogin, Okta, Shibboleth, [SimpleSA
 ## Installation
 
     $ npm install passport-saml
+
 /
+
 ## Usage
 
 The examples utilize the [Feide OpenIdp identity provider](https://openidp.feide.no/). You need an account there to log in with this. You also need to [register your site](https://openidp.feide.no/simplesaml/module.php/metaedit/index.php) as a service provider.
@@ -21,7 +23,7 @@ The examples utilize the [Feide OpenIdp identity provider](https://openidp.feide
 The SAML identity provider will redirect you to the URL provided by the `path` configuration.
 
 ```javascript
-var SamlStrategy = require('passport-saml').Strategy;
+const SamlStrategy = require('passport-saml').Strategy;
 [...]
 
 passport.use(new SamlStrategy(
@@ -46,7 +48,7 @@ passport.use(new SamlStrategy(
 You can pass a `getSamlOptions` parameter to `MultiSamlStrategy` which will be called before the SAML flows. Passport-SAML will pass in the request object so you can decide which configuation is appropriate.
 
 ```javascript
-var MultiSamlStrategy = require('passport-saml/multiSamlStrategy');
+const { MultiSamlStrategy } = require('passport-saml');
 [...]
 
 passport.use(new MultiSamlStrategy(
@@ -71,6 +73,7 @@ passport.use(new MultiSamlStrategy(
   })
 );
 ```
+
 The options passed when the `MultiSamlStrategy` is initialized are also passed as default values to each provider.
 e.g. If you provide an `issuer` on `MultiSamlStrategy`, this will be also a default value for every provider.
 You can override these defaults by passing a new value through the `getSamlOptions` function.
@@ -78,7 +81,6 @@ You can override these defaults by passing a new value through the `getSamlOptio
 Using multiple providers supports `validateInResponseTo`, but all the `InResponse` values are stored on the same Cache. This means, if you're using the default `InMemoryCache`, that all providers have access to it and a provider might get its response validated against another's request. [Issue Report](!https://github.com/node-saml/passport-saml/issues/334). To amend this you should provide a different cache provider per SAML provider, through the `getSamlOptions` function.
 
 > :warning: **There's a race condition [bug](https://github.com/node-saml/passport-saml/issues/425) in versions < 1.3.3 which makes it vulnerable to DOS attacks**: Please use > 1.3.3 if you want to use this issue
-
 
 #### The profile object:
 
@@ -92,15 +94,15 @@ type Profile = {
   nameIDFormat?: string;
   nameQualifier?: string;
   spNameQualifier?: string;
-  mail?: string;  // InCommon Attribute urn:oid:0.9.2342.19200300.100.1.3
-  email?: string;  // `mail` if not present in the assertion
-  getAssertionXml(): string;  // get the raw assertion XML
-  getAssertion(): object;  // get the assertion XML parsed as a JavaScript object
+  mail?: string; // InCommon Attribute urn:oid:0.9.2342.19200300.100.1.3
+  email?: string; // `mail` if not present in the assertion
+  getAssertionXml(): string; // get the raw assertion XML
+  getAssertion(): object; // get the assertion XML parsed as a JavaScript object
   getSamlResponseXml(): string; // get the raw SAML response XML
   ID?: string;
 } & {
-  [attributeName: string]: unknown;  // arbitrary `AttributeValue`s
-}
+  [attributeName: string]: unknown; // arbitrary `AttributeValue`s
+};
 ```
 
 #### Config parameter details:
@@ -138,7 +140,7 @@ type Profile = {
 ```javascript
 {
   idpList: [ // optional
-    { 
+    {
       entries: [ // required
         {
           providerId: 'yourProviderId', // required for each entry
@@ -153,22 +155,22 @@ type Profile = {
   requesterId: 'requesterId', // optional
 }
 ```
- * **InResponseTo Validation**
-  * `validateInResponseTo`: if truthy, then InResponseTo will be validated from incoming SAML responses
-  * `requestIdExpirationPeriodMs`: Defines the expiration time when a Request ID generated for a SAML request will not be valid if seen in a SAML response in the `InResponseTo` field.  Default is 8 hours.
-  * `cacheProvider`: Defines the implementation for a cache provider used to store request Ids generated in SAML requests as part of `InResponseTo` validation.  Default is a built-in in-memory cache provider.  For details see the 'Cache Provider' section.
- * **Issuer Validation**
-  * `idpIssuer`: if provided, then the IdP issuer will be validated for incoming Logout Requests/Responses. For ADFS this looks like `https://acme_tools.windows.net/deadbeef`
- * **Passport**
-  * `passReqToCallback`: if truthy, `req` will be passed as the first argument to the verify callback (default: `false`)
-  * `name`: Optionally, provide a custom name. (default: `saml`). Useful If you want to instantiate the strategy multiple times with different configurations,
-            allowing users to authenticate against multiple different SAML targets from the same site. You'll need to use a unique set of URLs
-            for each target, and use this custom name when calling `passport.authenticate()` as well.
- * **Logout**
-  * `logoutUrl`: base address to call with logout requests (default: `entryPoint`)
-  * `additionalLogoutParams`: dictionary of additional query params to add to 'logout' requests
-  * `logoutCallbackUrl`: The value with which to populate the `Location` attribute in the `SingleLogoutService` elements in the generated service provider metadata.
 
+- **InResponseTo Validation**
+- `validateInResponseTo`: if truthy, then InResponseTo will be validated from incoming SAML responses
+- `requestIdExpirationPeriodMs`: Defines the expiration time when a Request ID generated for a SAML request will not be valid if seen in a SAML response in the `InResponseTo` field. Default is 8 hours.
+- `cacheProvider`: Defines the implementation for a cache provider used to store request Ids generated in SAML requests as part of `InResponseTo` validation. Default is a built-in in-memory cache provider. For details see the 'Cache Provider' section.
+- **Issuer Validation**
+- `idpIssuer`: if provided, then the IdP issuer will be validated for incoming Logout Requests/Responses. For ADFS this looks like `https://acme_tools.windows.net/deadbeef`
+- **Passport**
+- `passReqToCallback`: if truthy, `req` will be passed as the first argument to the verify callback (default: `false`)
+- `name`: Optionally, provide a custom name. (default: `saml`). Useful If you want to instantiate the strategy multiple times with different configurations,
+  allowing users to authenticate against multiple different SAML targets from the same site. You'll need to use a unique set of URLs
+  for each target, and use this custom name when calling `passport.authenticate()` as well.
+- **Logout**
+- `logoutUrl`: base address to call with logout requests (default: `entryPoint`)
+- `additionalLogoutParams`: dictionary of additional query params to add to 'logout' requests
+- `logoutCallbackUrl`: The value with which to populate the `Location` attribute in the `SingleLogoutService` elements in the generated service provider metadata.
 
 ### Provide the authentication callback
 
@@ -177,13 +179,14 @@ You need to provide a route corresponding to the `path` configuration parameter 
 The authentication callback must be invoked after the `body-parser` middlerware.
 
 ```javascript
-const bodyParser = require('body-parser');
+const bodyParser = require("body-parser");
 
-app.post('/login/callback',
+app.post(
+  "/login/callback",
   bodyParser.urlencoded({ extended: false }),
-  passport.authenticate('saml', { failureRedirect: '/', failureFlash: true }),
-  function(req, res) {
-    res.redirect('/');
+  passport.authenticate("saml", { failureRedirect: "/", failureFlash: true }),
+  function (req, res) {
+    res.redirect("/");
   }
 );
 ```
@@ -193,10 +196,11 @@ app.post('/login/callback',
 Use `passport.authenticate()`, specifying `saml` as the strategy:
 
 ```javascript
-app.get('/login',
-  passport.authenticate('saml', { failureRedirect: '/', failureFlash: true }),
-  function(req, res) {
-    res.redirect('/');
+app.get(
+  "/login",
+  passport.authenticate("saml", { failureRedirect: "/", failureFlash: true }),
+  function (req, res) {
+    res.redirect("/");
   }
 );
 ```
@@ -204,18 +208,20 @@ app.get('/login',
 ...or, if you wish to add or override query string parameters:
 
 ```javascript
-app.get('/login',
-  passport.authenticate('saml', { additionalParams: { 'username': 'user@domain.com' }}),
-  function(req, res) {
-    res.redirect('/');
+app.get(
+  "/login",
+  passport.authenticate("saml", {
+    additionalParams: { username: "user@domain.com" },
+  }),
+  function (req, res) {
+    res.redirect("/");
   }
 );
 ```
 
 ### generateServiceProviderMetadata( decryptionCert, signingCert )
 
-
-As a convenience, the strategy object exposes a `generateServiceProviderMetadata` method which will generate a service provider metadata document suitable for supplying to an identity provider.  This method will only work on strategies which are configured with a `callbackUrl` (since the relative path for the callback is not sufficient information to generate a complete metadata document).
+As a convenience, the strategy object exposes a `generateServiceProviderMetadata` method which will generate a service provider metadata document suitable for supplying to an identity provider. This method will only work on strategies which are configured with a `callbackUrl` (since the relative path for the callback is not sufficient information to generate a complete metadata document).
 
 The `decryptionCert` argument should be a public certificate matching the `decryptionPvk` and is required if the strategy is configured with a `decryptionPvk`.
 
@@ -223,12 +229,11 @@ The `signingCert` argument should be a public certificate matching the `privateC
 
 The `generateServiceProviderMetadata` method is also available on the `MultiSamlStrategy`, but needs an extra request and a callback argument (`generateServiceProviderMetadata( req, decryptionCert, signingCert, next )`), which are passed to the `getSamlOptions` to retrieve the correct configuration.
 
-
 ## Security and signatures
 
 Passport-SAML uses the HTTP Redirect Binding for its `AuthnRequest`s (unless overridden with the `authnRequestBinding` parameter), and expects to receive the messages back via the HTTP POST binding.
 
-Authentication requests sent by Passport-SAML can be signed using RSA signature with SHA1, SHA256 or SHA512 hashing algorithms. 
+Authentication requests sent by Passport-SAML can be signed using RSA signature with SHA1, SHA256 or SHA512 hashing algorithms.
 
 To select hashing algorithm, use:
 
@@ -252,12 +257,14 @@ Formats supported for `privateKey` field are,
 -----END PRIVATE KEY-----
 
 ```
+
 ```
 -----BEGIN RSA PRIVATE KEY-----
 <private key contents here delimited at 64 characters per row>
 -----END RSA PRIVATE KEY-----
 
 ```
+
 (both versions work)
 See example from tests of the first version of [well formatted private key](test/static/acme_tools_com.key).
 
@@ -268,29 +275,28 @@ See example from tests of [singleline private key](test/static/singleline_acme_t
 Add it to strategy options like this:
 
 ```javascript
-    privateCert: fs.readFileSync('./privateCert.pem', 'utf-8')
+privateCert: fs.readFileSync("./privateCert.pem", "utf-8");
 ```
-
 
 It is a good idea to validate the signatures of the incoming SAML Responses. For this, you can provide the Identity Provider's public PEM-encoded X.509 signing certificate using the `cert` configuration key. The "BEGIN CERTIFICATE" and "END CERTIFICATE" lines should be stripped out and the certificate should be provided on a single line.
 
 ```javascript
-    cert: 'MIICizCCAfQCCQCY8tKaMc0BMjANBgkqh ... W=='
+cert: "MIICizCCAfQCCQCY8tKaMc0BMjANBgkqh ... W==";
 ```
 
 If you have a certificate in the binary DER encoding, you can convert it to the necessary PEM encoding like this:
 
 ```bash
      openssl x509 -inform der -in my_certificate.cer -out my_certificate.pem
-````
+```
 
 If the Identity Provider has multiple signing certificates that are valid (such as during the rolling from an old key to a new key and responses signed with either key are valid) then the `cert` configuration key can be an array:
 
 ```javascript
-    cert: [ 'MIICizCCAfQCCQCY8tKaMc0BMjANBgkqh ... W==', 'MIIEOTCCAyGgAwIBAgIJAKZgJdKdCdL6M ... g=' ]
+cert: ["MIICizCCAfQCCQCY8tKaMc0BMjANBgkqh ... W==", "MIIEOTCCAyGgAwIBAgIJAKZgJdKdCdL6M ... g="];
 ```
 
-The `cert` configuration key can also be a function that receives a callback as argument calls back a possible error and a  certificate or array of certificates.  This allows the Identity Provider to be polled for valid certificates and the new certificate can be used if it is changed:
+The `cert` configuration key can also be a function that receives a callback as argument calls back a possible error and a certificate or array of certificates. This allows the Identity Provider to be polled for valid certificates and the new certificate can be used if it is changed:
 
 ```javascript
     cert: function(callback) { callback(null,polledCertificates); }
@@ -318,7 +324,7 @@ For more detailed instructions, see [ADFS documentation](docs/adfs/README.md).
 ## SAML Response Validation - NotBefore and NotOnOrAfter
 
 If the `NotBefore` or the `NotOnOrAfter` attributes are returned in the SAML response, Passport-SAML will validate them
-against the current time +/- a configurable clock skew value.  The default for the skew is 0s.  This is to account for
+against the current time +/- a configurable clock skew value. The default for the skew is 0s. This is to account for
 differences between the clock time on the client (Node server with Passport-SAML) and the server (Identity provider).
 
 `NotBefore` and `NotOnOrAfter` can be part of either the `SubjectConfirmation` element, or within in the `Assertion/Conditions` element
@@ -332,18 +338,18 @@ Validation will succeed if Passport-SAML previously generated a SAML request wit
 Also note that `InResponseTo` is validated as an attribute of the top level `Response` element in the SAML response, as well
 as part of the `SubjectConfirmation` element.
 
-Previous request id's generated for SAML requests will eventually expire.  This is controlled with the `requestIdExpirationPeriodMs` option
-passed into the Passport-SAML config.  The default is 28,800,000 ms (8 hours).  Once expired, a subsequent SAML response
+Previous request id's generated for SAML requests will eventually expire. This is controlled with the `requestIdExpirationPeriodMs` option
+passed into the Passport-SAML config. The default is 28,800,000 ms (8 hours). Once expired, a subsequent SAML response
 received with an `InResponseTo` equal to the expired id will not validate and an error will be returned.
 
 ## Cache Provider
 
-When `InResponseTo` validation is turned on, Passport-SAML will store generated request ids used in SAML requests to the IdP.  The implementation
+When `InResponseTo` validation is turned on, Passport-SAML will store generated request ids used in SAML requests to the IdP. The implementation
 of how things are stored, checked to see if they exist, and eventually removed is from the Cache Provider used by Passport-SAML.
 
-The default implementation is a simple in-memory cache provider.  For multiple server/process scenarios, this will not be sufficient as
+The default implementation is a simple in-memory cache provider. For multiple server/process scenarios, this will not be sufficient as
 the server/process that generated the request id and stored in memory could be different than the server/process handling the
-SAML response.  The `InResponseTo` could fail in this case erroneously.
+SAML response. The `InResponseTo` could fail in this case erroneously.
 
 To support this scenario you can provide an implementation for a cache provider by providing an object with following functions:
 
@@ -363,6 +369,7 @@ To support this scenario you can provide an implementation for a cache provider 
 ```
 
 The `callback` argument is a function in the style of normal Node callbacks:
+
 ```
 function callback(err, result)
 {
@@ -375,11 +382,11 @@ Provide an instance of an object which has these functions passed to the `cacheP
 ## SLO (single logout)
 
 Passport-SAML has built in support for SLO including
-* Signature validation
-* IdP initiated and SP initiated logouts
-* Decryption of encrypted name identifiers in IdP initiated logout
-* `Redirect` and `POST` SAML Protocol Bindings
 
+- Signature validation
+- IdP initiated and SP initiated logouts
+- Decryption of encrypted name identifiers in IdP initiated logout
+- `Redirect` and `POST` SAML Protocol Bindings
 
 ## ChangeLog
 
