@@ -17,13 +17,59 @@ export interface AuthorizeOptions extends AuthenticateOptions {
   samlFallback?: "login-request" | "logout-request";
 }
 
-export interface SamlSigningOptions {
-  /** @deprecated use privateKey field instead */
-  privateCert?: string | Buffer;
-  privateKey: string | Buffer;
-  signatureAlgorithm?: SignatureAlgorithm;
-  xmlSignatureTransforms?: string[];
-  digestAlgorithm?: string;
+export interface SAMLOptions {
+    // Core
+    callbackUrl: string;
+    path: string;
+    protocol: string;
+    host: string;
+    entryPoint: string;
+    issuer: string;
+    /** @deprecated use privateKey field instead */
+    privateCert?: string;
+    privateKey: string;
+    cert: string | string[] | CertCallback;
+    decryptionPvk: string;
+    encryptionCert: string;
+    signatureAlgorithm: 'sha1' | 'sha256' | 'sha512';
+
+    // Additional SAML behaviors
+    additionalParams: Record<string, string>;
+    additionalAuthorizeParams: Record<string, string>;
+    identifierFormat: string;
+    acceptedClockSkewMs: number;
+    attributeConsumingServiceIndex: string | null;
+    disableRequestedAuthnContext: boolean;
+    authnContext: string | string[];
+    forceAuthn: boolean;
+    allowCreate: boolean;
+    spNameQualifier: string;
+    skipRequestCompression: boolean;
+    /** @deprecated use racComparison field instead */
+    RACComparison?: 'exact' | 'minimum' | 'maximum' | 'better';
+    racComparison: 'exact' | 'minimum' | 'maximum' | 'better';
+    providerName: string;
+    passive: boolean;
+    idpIssuer: string;
+    audience: string;
+    scoping : SamlScopingConfig;
+
+    // InResponseTo Validation
+    validateInResponseTo: boolean;
+    requestIdExpirationPeriodMs: number;
+    cacheProvider: CacheProvider;
+
+    // Logout
+    logoutUrl: string;
+    additionalLogoutParams: Record<string, string>;
+    logoutCallbackUrl: string;
+
+    // extras
+    xmlSignatureTransforms: string[];
+    digestAlgorithm: string;
+    /** @deprecated use disableRequestAcsUrl field instead */
+    disableRequestACSUrl?: boolean;
+    disableRequestAcsUrl: boolean;
 }
 
 export interface SamlOptions extends SamlSigningOptions {
@@ -95,8 +141,7 @@ export interface AuthorizeRequestXML {
 }
 
 export interface LogoutRequestXML {
-  "samlp:LogoutRequest": {
-    "saml:NameID": XMLInput;
+  'samlp:LogoutRequest': {
     [key: string]: XMLValue;
   };
 }

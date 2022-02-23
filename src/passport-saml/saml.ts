@@ -1,43 +1,41 @@
-import Debug from "debug";
-const debug = Debug("passport-saml");
-import * as zlib from "zlib";
-import * as xml2js from "xml2js";
-import * as xmlCrypto from "xml-crypto";
-import * as crypto from "crypto";
-import * as xmldom from "xmldom";
-import * as url from "url";
-import * as querystring from "querystring";
-import * as xmlbuilder from "xmlbuilder";
-import * as xmlenc from "xml-encryption";
-import * as util from "util";
-import { CacheProvider as InMemoryCacheProvider } from "./inmemory-cache-provider";
-import * as algorithms from "./algorithms";
-import { signAuthnRequestPost } from "./saml-post-signing";
-import type { Request } from "express";
-import { ParsedQs } from "qs";
-import {
-  AudienceRestrictionXML,
-  AuthenticateOptions,
-  AuthorizeOptions,
-  AuthorizeRequestXML,
-  CertCallback,
-  LogoutRequestXML,
-  Profile,
-  RequestWithUser,
-  SamlOptions,
-  SamlIDPListConfig,
-  SamlIDPEntryConfig,
-  SamlScopingConfig,
-  ServiceMetadataXML,
-  XMLInput,
-  XMLObject,
-  XMLOutput,
-  XMLValue,
-} from "./types";
-
-const inflateRawAsync = util.promisify(zlib.inflateRaw);
-const deflateRawAsync = util.promisify(zlib.deflateRaw);
-
+import Debug from 'debug';
+const debug = Debug('passport-saml');
+import * as zlib from 'zlib';
+import * as xml2js from 'xml2js';
+import * as xmlCrypto from 'xml-crypto';
+import * as crypto from 'crypto';
+import * as xmldom from '@xmldom/xmldom';
+import * as url from 'url';
+import * as querystring from 'querystring';
+import * as xmlbuilder from 'xmlbuilder';
+import * as xmlbuilder2 from 'xmlbuilder2';
+import {pki} from 'node-forge';
+import * as xmlenc from 'xml-encryption';
+import * as util from 'util';
+import {CacheProvider as InMemoryCacheProvider} from './inmemory-cache-provider';
+import * as algorithms from './algorithms';
+import { signAuthnRequestPost } from './saml-post-signing';
+import type { Request } from 'express';
+import { ParsedQs } from 'qs';
+import { AudienceRestrictionXML,
+         AuthenticateOptions,
+         AuthorizeOptions,
+         AuthorizeRequestXML,
+         CertCallback,
+         LogoutRequestXML,
+         Profile,
+         RequestWithUser,
+         SAMLOptions,
+         SamlIDPListConfig,
+         SamlIDPEntryConfig,
+         SamlScopingConfig,
+         ServiceMetadataXML,
+         XMLInput,
+         XMLObject,
+         XMLOutput,
+         XMLValue
+       } from './types';
+const { xpath } = xmlCrypto;
 interface NameID {
   value: string | null;
   format: string | null;
@@ -122,13 +120,29 @@ class SAML {
     if (options.privateCert) {
       console.warn("options.privateCert has been deprecated; use options.privateKey instead.");
 
-      if (!options.privateKey) {
+      if (options.privateKey == null) {
         options.privateKey = options.privateCert;
       }
     }
 
-    if (Object.prototype.hasOwnProperty.call(options, "cert") && !options.cert) {
-      throw new Error("Invalid property: cert must not be empty");
+    if (options.RACComparison) {
+      console.warn("options.RACComparison has been deprecated; use options.racComparison instead.")
+
+      if (options.racComparison == null) {
+        options.racComparison = options.RACComparison;
+      }
+    }
+
+    if (options.disableRequestACSUrl) {
+      console.warn("options.disableRequestACSUrl has been deprecated; use options.disableRequestAcsUrl instead.")
+
+      if (options.disableRequestAcsUrl == null) {
+        options.disableRequestAcsUrl = options.disableRequestACSUrl;
+      }
+    }
+
+    if (Object.prototype.hasOwnProperty.call(options, 'cert') && !options.cert) {
+      throw new Error('Invalid property: cert must not be empty');
     }
 
     if (!options.path) {
@@ -191,11 +205,8 @@ class SAML {
      * - maximum:  Assertion context must be no stronger than a context in the list
      * - better:  Assertion context must be stronger than all contexts in the list
      */
-    if (
-      !options.RACComparison ||
-      ["exact", "minimum", "maximum", "better"].indexOf(options.RACComparison) === -1
-    ) {
-      options.RACComparison = "exact";
+    if (!options.racComparison || ['exact','minimum','maximum','better'].indexOf(options.racComparison) === -1){
+      options.racComparison = 'exact';
     }
 
     options.authnRequestBinding = options.authnRequestBinding || "HTTP-Redirect";
@@ -258,6 +269,8 @@ class SAML {
     const id = "_" + this.generateUniqueID();
     const instant = this.generateInstant();
     const forceAuthn = this.options.forceAuthn || false;
+    const allowCreate = this.options.allowCreate || true;
+    const spNameQualifier = this.options.spNameQualifier || this.options.issuer;
 
     if (this.options.validateInResponseTo) {
       await this.cacheProvider.saveAsync(id, instant);
@@ -283,17 +296,18 @@ class SAML {
       request["samlp:AuthnRequest"]["@ForceAuthn"] = true;
     }
 
-    if (!this.options.disableRequestACSUrl) {
-      request["samlp:AuthnRequest"]["@AssertionConsumerServiceURL"] = this.getCallbackUrl(req);
-    }
+      if (!this.options.disableRequestAcsUrl) {
+        request['samlp:AuthnRequest']['@AssertionConsumerServiceURL'] = this.getCallbackUrl(req);
+      }
 
-    if (this.options.identifierFormat) {
-      request["samlp:AuthnRequest"]["samlp:NameIDPolicy"] = {
-        "@xmlns:samlp": "urn:oasis:names:tc:SAML:2.0:protocol",
-        "@Format": this.options.identifierFormat,
-        "@AllowCreate": "true",
-      };
-    }
+      if (this.options.identifierFormat) {
+        request['samlp:AuthnRequest']['samlp:NameIDPolicy'] = {
+          '@xmlns:samlp': 'urn:oasis:names:tc:SAML:2.0:protocol',
+          '@Format': this.options.identifierFormat,
+          '@SPNameQualifier': spNameQualifier,
+          '@AllowCreate': allowCreate
+        };
+      }
 
     if (!this.options.disableRequestedAuthnContext) {
       const authnContextClassRefs: XMLInput[] = [];
@@ -304,12 +318,12 @@ class SAML {
         });
       });
 
-      request["samlp:AuthnRequest"]["samlp:RequestedAuthnContext"] = {
-        "@xmlns:samlp": "urn:oasis:names:tc:SAML:2.0:protocol",
-        "@Comparison": this.options.RACComparison,
-        "saml:AuthnContextClassRef": authnContextClassRefs,
-      };
-    }
+        request['samlp:AuthnRequest']['samlp:RequestedAuthnContext'] = {
+          '@xmlns:samlp': 'urn:oasis:names:tc:SAML:2.0:protocol',
+          '@Comparison': this.options.racComparison,
+          'saml:AuthnContextClassRef': authnContextClassRefs
+        };
+      }
 
     if (this.options.attributeConsumingServiceIndex != null) {
       request["samlp:AuthnRequest"][
@@ -387,46 +401,85 @@ class SAML {
     const instant = this.generateInstant();
 
     const request = {
-      "samlp:LogoutRequest": {
-        "@xmlns:samlp": "urn:oasis:names:tc:SAML:2.0:protocol",
-        "@xmlns:saml": "urn:oasis:names:tc:SAML:2.0:assertion",
-        "@ID": id,
-        "@Version": "2.0",
-        "@IssueInstant": instant,
-        "@Destination": this.options.logoutUrl,
-        "saml:Issuer": {
-          "@xmlns:saml": "urn:oasis:names:tc:SAML:2.0:assertion",
-          "#text": this.options.issuer,
-        },
-        "saml:NameID": {
-          "@Format": req.user!.nameIDFormat,
-          "#text": req.user!.nameID,
-        },
-      },
+      'samlp:LogoutRequest' : {
+        '@xmlns:samlp': 'urn:oasis:names:tc:SAML:2.0:protocol',
+        '@xmlns:saml': 'urn:oasis:names:tc:SAML:2.0:assertion',
+        '@ID': id,
+        '@Version': '2.0',
+        '@IssueInstant': instant,
+        '@Destination': this.options.logoutUrl,
+        'saml:Issuer' : {
+          '@xmlns:saml': 'urn:oasis:names:tc:SAML:2.0:assertion',
+          '#text': this.options.issuer
+        }
+      }
     } as LogoutRequestXML;
 
+    const nameId = {
+      'NameID' : {
+        '@xmlns': 'urn:oasis:names:tc:SAML:2.0:assertion',
+        '@Format': req.user!.nameIDFormat,
+        '#text': req.user!.nameID
+      } as XMLObject
+    };
+
     if (req.user!.nameQualifier != null) {
-      request["samlp:LogoutRequest"]["saml:NameID"]["@NameQualifier"] = req.user!.nameQualifier;
+      nameId['NameID']['@NameQualifier'] = req.user!.nameQualifier;
     }
 
     if (req.user!.spNameQualifier != null) {
-      request["samlp:LogoutRequest"]["saml:NameID"]["@SPNameQualifier"] = req.user!.spNameQualifier;
+      nameId['NameID']['@SPNameQualifier'] = req.user!.spNameQualifier;
     }
 
-    if (req.user!.sessionIndex) {
-      request["samlp:LogoutRequest"]["saml2p:SessionIndex"] = {
-        "@xmlns:saml2p": "urn:oasis:names:tc:SAML:2.0:protocol",
-        "#text": req.user!.sessionIndex,
+    if (this.options.encryptionCert) {
+      const cert = this.certToPEM(this.options.encryptionCert);
+      const xmlencOptions = {
+        pem: cert,
+        rsa_pub: pki.publicKeyToPem(pki.certificateFromPem(cert).publicKey),
+        encryptionAlgorithm: 'http://www.w3.org/2001/04/xmlenc#aes256-cbc' as xmlenc.EncryptionAlgorithm,
+        keyEncryptionAlgorithm: 'http://www.w3.org/2001/04/xmlenc#rsa-oaep-mgf1p' as xmlenc.KeyEncryptionAlgorithm,
+        warnInsecureAlgorithm: false
       };
-    }
+    
+      return util.promisify(xmlenc.encrypt).bind(xmlenc)(xmlbuilder.create(nameId).end(), xmlencOptions)
+        .then((encryptedXml: string) => {
+          const encryptedData: Record<string, any> = xmlbuilder2.create(encryptedXml).end({ format: "object" });
+          delete encryptedData['xenc:EncryptedData']['KeyInfo']['e:EncryptedKey']['KeyInfo'];
+          request['samlp:LogoutRequest']['saml:EncryptedID'] = encryptedData;
+        
+          if (req.user!.sessionIndex) {
+            request['samlp:LogoutRequest']['saml2p:SessionIndex'] = {
+              '@xmlns:saml2p': 'urn:oasis:names:tc:SAML:2.0:protocol',
+              '#text': req.user!.sessionIndex
+            };
+          }
 
-    await this.cacheProvider.saveAsync(id, instant);
-    return xmlbuilder.create((request as unknown) as Record<string, any>).end();
+          return util.promisify(this.cacheProvider.save).bind(this.cacheProvider)(id, instant)
+            .then(function () {
+              return xmlbuilder.create((request as unknown) as Record<string, any>).end();
+          });  
+      });              
+    } else {
+      Object.assign(request['samlp:LogoutRequest'], nameId);
+
+      if (req.user!.sessionIndex) {
+        request['samlp:LogoutRequest']['saml2p:SessionIndex'] = {
+          '@xmlns:saml2p': 'urn:oasis:names:tc:SAML:2.0:protocol',
+          '#text': req.user!.sessionIndex
+        };
+      }
+
+      return util.promisify(this.cacheProvider.save).bind(this.cacheProvider)(id, instant)
+        .then(function () {
+          return xmlbuilder.create((request as unknown) as Record<string, any>).end();
+      });     
+    }
   }
 
   generateLogoutResponse(req: Request, logoutRequest: Profile) {
     const id = "_" + this.generateUniqueID();
     const instant = this.generateInstant();
+    const status = logoutRequest.status || 'urn:oasis:names:tc:SAML:2.0:status:Success';
 
     const request = {
       "samlp:LogoutResponse": {
@@ -440,12 +493,12 @@ class SAML {
         "saml:Issuer": {
           "#text": this.options.issuer,
         },
-        "samlp:Status": {
-          "samlp:StatusCode": {
-            "@Value": "urn:oasis:names:tc:SAML:2.0:status:Success",
-          },
-        },
-      },
+        'samlp:Status': {
+          'samlp:StatusCode': {
+            '@Value': status
+          }
+        }
+      }
     };
 
     return xmlbuilder.create(request).end();
@@ -753,6 +806,8 @@ class SAML {
     if (totalReferencedNodes.length > 1) {
       return false;
     }
+    // normalize XML to replace XML-encoded carriage returns with actual carriage returns
+    fullXml = this.normalizeXml(fullXml);
     fullXml = this.normalizeNewlines(fullXml);
     return sig.checkSignature(fullXml);
   }
@@ -880,17 +935,31 @@ class SAML {
               }
             }
 
-            // Note that we're not requiring a valid signature before this logic -- since we are
-            //   throwing an error in any case, and some providers don't sign error results,
-            //   let's go ahead and give the potentially more helpful error.
-            if (statusCode && statusCode[0].$.Value) {
-              const msgType = statusCode[0].$.Value.match(/[^:]*$/)[0];
-              if (msgType != "Success") {
-                let msg = "unspecified";
-                if (status[0].StatusMessage) {
-                  msg = status[0].StatusMessage[0]._;
-                } else if (statusCode[0].StatusCode) {
-                  msg = statusCode[0].StatusCode[0].$.Value.match(/[^:]*$/)[0];
+              // Note that we're not requiring a valid signature before this logic -- since we are
+              //   throwing an error in any case, and some providers don't sign error results,
+              //   let's go ahead and give the potentially more helpful error.
+              if (statusCode && statusCode[0].$.Value) {
+                const msgType = statusCode[0].$.Value.match(/[^:]*$/)[0];
+                if (msgType != 'Success') {
+                    let msg = 'unspecified';
+                    let failure = 'unspecified';
+                    if (status[0].StatusMessage) {
+                      msg = status[0].StatusMessage[0]._;
+                    } 
+                    if (statusCode[0].StatusCode) {
+                      failure = statusCode[0].StatusCode[0].$.Value.match(/[^:]*$/)[0];
+                    }
+                    const error = new Error('SAML provider returned ' + msgType + ' error: ' + (msg != 'unspecified' ? msg : failure));
+                    const builderOpts = {
+                      rootName: 'Status',
+                      headless: true
+                    };
+                    // @ts-expect-error adding extra attr to default Error object
+                    error.statusXml = new xml2js.Builder(builderOpts).buildObject(status[0]);
+                    // @ts-expect-error: SIC custom error management
+                    error.sicErrURL = failure + "&message=" + msg.replace(/\n|\r/g, "").replace(/\.+$/, "") + "&status=" + msgType;                    
+                    return Promise.reject(error);
+                  }
                 }
                 const error = new Error("SAML provider returned " + msgType + " error: " + msg);
                 const builderOpts = {
@@ -1047,11 +1116,16 @@ class SAML {
     if (statusCode !== "urn:oasis:names:tc:SAML:2.0:status:Success")
       throw new Error("Bad status code: " + statusCode);
 
-    this.verifyIssuer(doc.LogoutResponse);
-    const inResponseTo = doc.LogoutResponse.$.InResponseTo;
-    if (inResponseTo) {
-      return this.validateInResponseTo(inResponseTo);
-    }
+      // Check for Partial Logout
+      const secondLevelStatus = doc.LogoutResponse.Status[0].StatusCode[0].StatusCode;
+      if (secondLevelStatus && secondLevelStatus[0].$.Value === "urn:oasis:names:tc:SAML:2.0:status:PartialLogout")
+        throw new Error('Bad status code: ' + secondLevelStatus[0].$.Value);
+      
+      this.verifyIssuer(doc.LogoutResponse);
+      const inResponseTo = doc.LogoutResponse.$.InResponseTo;
+      if (inResponseTo) {
+        return this.validateInResponseTo(inResponseTo);
+      }
 
     return true;
   }
@@ -1467,6 +1541,12 @@ class SAML {
     // we are considered the XML processor and are responsible for newline normalization
     // https://github.com/node-saml/passport-saml/issues/431#issuecomment-718132752
     return xml.replace(/\r\n?/g, "\n");
+  }
+
+  normalizeXml(xml: string): string {
+    // we can use this utility to parse and re-stringify XML
+    // `DOMParser` will take care of normalization tasks, like replacing XML-encoded carriage returns with actual carriage returns
+    return new xmldom.DOMParser({}).parseFromString(xml).toString();
   }
 }
 
