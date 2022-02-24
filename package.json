@@ -51,7 +51,7 @@
     "watch": "concurrently --kill-others \"npm:*-watch\""
   },
   "dependencies": {
-    "@xmldom/xmldom": "0.7.x",
+    "@xmldom/xmldom": "0.8.0",
     "debug": "^4.3.1",
     "passport-strategy": "*",
     "node-forge": "^1.2.1",
