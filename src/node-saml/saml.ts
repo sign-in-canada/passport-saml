@@ -34,7 +34,9 @@ import { assertRequired } from "./utility";
 import {
   buildXml2JsObject,
   buildXmlBuilderObject,
+  StringXml2Object,
   decryptXml,
+  encryptXml,
   parseDomFromString,
   parseXml2JsFromString,
   validateXmlSignatureForCert,
@@ -43,6 +45,7 @@ import {
 
 const inflateRawAsync = util.promisify(zlib.inflateRaw);
 const deflateRawAsync = util.promisify(zlib.deflateRaw);
+const pki = require("node-forge").pki;
 
 interface NameID {
   value: string | null;
@@ -239,6 +242,8 @@ class SAML {
 
     const id = "_" + this._generateUniqueID();
     const instant = this.generateInstant();
+    const allowCreate = this.options.allowCreate || true;
+    const spNameQualifier = this.options.spNameQualifier || this.options.issuer;
 
     if (this.options.validateInResponseTo) {
       await this.cacheProvider.saveAsync(id, instant);
@@ -272,7 +277,8 @@ class SAML {
       request["samlp:AuthnRequest"]["samlp:NameIDPolicy"] = {
         "@xmlns:samlp": "urn:oasis:names:tc:SAML:2.0:protocol",
         "@Format": this.options.identifierFormat,
-        "@AllowCreate": "true",
+        "@SPNameQualifier": spNameQualifier,
+        "@AllowCreate": allowCreate,
       };
     }
 
@@ -379,35 +385,69 @@ class SAML {
           "@xmlns:saml": "urn:oasis:names:tc:SAML:2.0:assertion",
           "#text": this.options.issuer,
         },
-        "saml:NameID": {
-          "@Format": user!.nameIDFormat,
-          "#text": user!.nameID,
-        },
       },
     } as LogoutRequestXML;
 
+    const nameId = {
+      'NameID' : {
+        '@xmlns': 'urn:oasis:names:tc:SAML:2.0:assertion',
+        '@Format': user!.nameIDFormat,
+        '#text': user!.nameID
+      } as XMLObject
+    };
+
     if (user!.nameQualifier != null) {
-      request["samlp:LogoutRequest"]["saml:NameID"]["@NameQualifier"] = user!.nameQualifier;
+      nameId['NameID']['@NameQualifier'] = user!.nameQualifier;
     }
 
     if (user!.spNameQualifier != null) {
-      request["samlp:LogoutRequest"]["saml:NameID"]["@SPNameQualifier"] = user!.spNameQualifier;
+      nameId['NameID']['@SPNameQualifier'] = user!.spNameQualifier;
     }
 
-    if (user!.sessionIndex) {
-      request["samlp:LogoutRequest"]["saml2p:SessionIndex"] = {
-        "@xmlns:saml2p": "urn:oasis:names:tc:SAML:2.0:protocol",
-        "#text": user!.sessionIndex,
+    if (this.options.encryptionCert) {
+      const cert = this._certToPEM(this.options.encryptionCert);
+      const xmlencOptions = {
+          pem: cert,
+          rsa_pub: pki.publicKeyToPem(pki.certificateFromPem(cert).publicKey),
+          encryptionAlgorithm: 'http://www.w3.org/2001/04/xmlenc#aes256-cbc',
+          keyEncryptionAlgorithm: 'http://www.w3.org/2001/04/xmlenc#rsa-oaep-mgf1p',
+          warnInsecureAlgorithm: false
       };
-    }
 
-    await this.cacheProvider.saveAsync(id, instant);
-    return buildXmlBuilderObject(request, false);
+      const encryptedXml = await encryptXml(nameId, xmlencOptions);
+      const encryptedData: Record<string, any> = StringXml2Object(encryptedXml);
+      delete encryptedData['xenc:EncryptedData']['KeyInfo']['e:EncryptedKey']['KeyInfo'];
+      request['samlp:LogoutRequest']['saml:EncryptedID'] = encryptedData;
+
+      if (user!.sessionIndex) {
+        request["samlp:LogoutRequest"]["saml2p:SessionIndex"] = {
+          "@xmlns:saml2p": "urn:oasis:names:tc:SAML:2.0:protocol",
+          "#text": user!.sessionIndex,
+        };
+      }
+
+      await this.cacheProvider.saveAsync(id, instant);
+      return buildXmlBuilderObject(request, false);
+
+    } else {
+      Object.assign(request['samlp:LogoutRequest'], nameId);
+
+      if (user!.sessionIndex) {
+        request["samlp:LogoutRequest"]["saml2p:SessionIndex"] = {
+          "@xmlns:saml2p": "urn:oasis:names:tc:SAML:2.0:protocol",
+          "#text": user!.sessionIndex,
+        };
+      }
+     
+      await this.cacheProvider.saveAsync(id, instant);
+      return buildXmlBuilderObject(request, false);
+    }
   }
 
   _generateLogoutResponse(logoutRequest: Profile) {
     const id = "_" + this._generateUniqueID();
     const instant = this.generateInstant();
+    const status = logoutRequest.status || 'urn:oasis:names:tc:SAML:2.0:status:Success'
 
     const request = {
       "samlp:LogoutResponse": {
@@ -423,7 +463,7 @@ class SAML {
         },
         "samlp:Status": {
           "samlp:StatusCode": {
-            "@Value": "urn:oasis:names:tc:SAML:2.0:status:Success",
+            "@Value": status,
           },
         },
       },
@@ -857,16 +897,22 @@ class SAML {
               const msgType = statusCode[0].$.Value.match(/[^:]*$/)[0];
               if (msgType != "Success") {
                 let msg = "unspecified";
+                let failure = "unspecified";
                 if (status[0].StatusMessage) {
                   msg = status[0].StatusMessage[0]._;
-                } else if (statusCode[0].StatusCode) {
-                  msg = statusCode[0].StatusCode[0].$.Value.match(/[^:]*$/)[0];
+                } 
+                if (statusCode[0].StatusCode) {
+                  failure = statusCode[0].StatusCode[0].$.Value.match(/[^:]*$/)[0];
                 }
                 const statusXml = buildXml2JsObject("Status", status[0]);
-                throw new ErrorWithXmlStatus(
-                  "SAML provider returned " + msgType + " error: " + msg,
+                const error = new ErrorWithXmlStatus(
+                  "SAML provider returned " + msgType + " error: " + (msg != 'unspecified' ? msg : failure),
                   statusXml
                 );
+
+                // @ts-expect-error: SIC custom error management
+                error.sicErrURL = failure + "&message=" + msg.replace(/\n|\r/g, "").replace(/\.+$/, "") + "&status=" + msgType; 
+                throw error;
               }
             }
           }
@@ -1007,6 +1053,11 @@ class SAML {
     const statusCode = doc.LogoutResponse.Status[0].StatusCode[0].$.Value;
     if (statusCode !== "urn:oasis:names:tc:SAML:2.0:status:Success")
       throw new Error("Bad status code: " + statusCode);
+
+    // Check for Partial Logout
+    const secondLevelStatus = doc.LogoutResponse.Status[0].StatusCode[0].StatusCode;
+    if (secondLevelStatus && secondLevelStatus[0].$.Value === "urn:oasis:names:tc:SAML:2.0:status:PartialLogout")
+      throw new Error('Bad status code: ' + secondLevelStatus[0].$.Value);
 
     this.verifyIssuer(doc.LogoutResponse);
     const inResponseTo = doc.LogoutResponse.$.InResponseTo;

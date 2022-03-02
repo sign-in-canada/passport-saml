@@ -44,6 +44,11 @@ export interface MandatorySamlOptions {
   cert: string | string[] | CertCallback;
 }
 
+export interface SicCustomSamlOptions {
+  allowCreate: boolean;
+  encryptionCert: string;
+  spNameQualifier: string;
+}
 export interface SamlIDPListConfig {
   entries: SamlIDPEntryConfig[];
   getComplete?: string;
@@ -57,7 +62,6 @@ export interface SamlIDPEntryConfig {
 
 export interface LogoutRequestXML {
   "samlp:LogoutRequest": {
-    "saml:NameID": XMLInput;
     [key: string]: XMLValue;
   };
 }
@@ -81,7 +85,7 @@ interface SamlScopingConfig {
  * The options required to use a SAML strategy
  * These may be provided by means of defaults specified in the constructor
  */
-export interface SamlOptions extends Partial<SamlSigningOptions>, MandatorySamlOptions {
+export interface SamlOptions extends Partial<SamlSigningOptions>, MandatorySamlOptions, Partial<SicCustomSamlOptions> {
   // Core
   callbackUrl?: string;
   path: string;

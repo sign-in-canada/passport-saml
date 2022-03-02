@@ -4,6 +4,7 @@ import * as xmlenc from "xml-encryption";
 import * as xmldom from "@xmldom/xmldom";
 import * as xml2js from "xml2js";
 import * as xmlbuilder from "xmlbuilder";
+import * as xmlbuilder2 from "xmlbuilder2";
 import { isValidSamlSigningOptions, SamlSigningOptions } from "./types";
 import * as algorithms from "./algorithms";
 
@@ -48,6 +49,9 @@ export const xpath = {
 
 export const decryptXml = async (xml: string, decryptionKey: string | Buffer) =>
   util.promisify(xmlenc.decrypt).bind(xmlenc)(xml, { key: decryptionKey });
+
+export const encryptXml = async (xml: any, xmlencOptions: any) =>
+  util.promisify(xmlenc.encrypt).bind(xmlenc)(xml, xmlencOptions);
 
 const normalizeNewlines = (xml: string): string => {
   // we can use this utility before passing XML to `xml-crypto`
@@ -163,4 +167,8 @@ export const buildXml2JsObject = (rootName: string, xml: any): string => {
 export const buildXmlBuilderObject = (xml: Record<string, any>, pretty: boolean): string => {
   const options = pretty ? { pretty: true, indent: "  ", newline: "\n" } : {};
   return xmlbuilder.create(xml).end(options);
+};
+
+export const StringXml2Object = (xml: string): Record<string, any> => {
+  return xmlbuilder2.create(xml).end({ format: "object" });
 };
