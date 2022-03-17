@@ -282,6 +282,10 @@ class SAML {
       };
     }
 
+    if (!Array.isArray(this.options.authnContext)) {
+      this.options.authnContext = [this.options.authnContext];
+    }
+    
     if (!this.options.disableRequestedAuthnContext) {
       const authnContextClassRefs: XMLInput[] = [];
       (this.options.authnContext as string[]).forEach(function (value) {
