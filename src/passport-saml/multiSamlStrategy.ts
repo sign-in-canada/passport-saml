@@ -11,7 +11,7 @@ import {
 } from "./types";
 
 export class MultiSamlStrategy extends AbstractStrategy {
-  static readonly newSamlProviderOnConstruct = false;
+  static readonly newSamlProviderOnConstruct = true;
   _options: SamlConfig & MultiSamlConfig;
 
   constructor(options: MultiSamlConfig, verify: VerifyWithRequest);
