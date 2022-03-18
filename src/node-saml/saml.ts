@@ -417,8 +417,9 @@ class SAML {
           keyEncryptionAlgorithm: 'http://www.w3.org/2001/04/xmlenc#rsa-oaep-mgf1p',
           warnInsecureAlgorithm: false
       };
-
-      const encryptedXml = await encryptXml(nameId, xmlencOptions);
+      
+      const nameIdString = buildXmlBuilderObject(nameId, false);      
+      const encryptedXml = await encryptXml(nameIdString, xmlencOptions);
       const encryptedData: Record<string, any> = StringXml2Object(encryptedXml);
       delete encryptedData['xenc:EncryptedData']['KeyInfo']['e:EncryptedKey']['KeyInfo'];
       request['samlp:LogoutRequest']['saml:EncryptedID'] = encryptedData;
